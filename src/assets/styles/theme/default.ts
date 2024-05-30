@@ -7,11 +7,11 @@ export const DefaultTheme = {
   'gray-500': '#7C7CBA',
   'gray-600': '#323238',
   'gray-700': '#29292E',
-  'gray-800': '#282824',
+  'gray-800': '#1d1d1f',
   'gray-900': '#121214',
 
-  'green-300': '#00837E',
-  'green-500': '#88875F',
+  'green-300': '#00B37E',
+  'green-500': '#00875F',
   'green-700': '#015F43',
 
   'red-500': '#AB222E',
