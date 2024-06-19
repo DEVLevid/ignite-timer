@@ -11,6 +11,8 @@ import {
   StartCountDownButton,
   TaskInput,
 } from './styles'
+import { useEffect, useState } from 'react'
+import { differenceInSeconds } from 'date-fns'
 
 const newCicleValidationSchema = zod.object({
   task: zod.string().min(1, 'informe a tarefa'),
@@ -19,7 +21,18 @@ const newCicleValidationSchema = zod.object({
 
 type NewCicleFormDataProps = zod.infer<typeof newCicleValidationSchema>
 
+interface CycleProps {
+  id: string
+  task: string
+  minutesAmount: number
+  startDate: Date
+}
+
 export default function Home() {
+  const [cycles, setCycles] = useState<CycleProps[]>([])
+  const [activeCycleId, setActiveCycleId] = useState<string | null>(null)
+  const [amountSecondsPast, setAmountSecondsPast] = useState<number>(0)
+  const activeCycle = cycles.find((cycle) => cycle.id === activeCycleId)
   const { register, handleSubmit, watch, reset } =
     useForm<NewCicleFormDataProps>({
       resolver: zodResolver(newCicleValidationSchema),
@@ -28,15 +41,50 @@ export default function Home() {
         minutesAmount: 0,
       },
     })
+  useEffect(() => {
+    let interval: number
+    if (activeCycle) {
+      interval = setInterval(() => {
+        setAmountSecondsPast(
+          differenceInSeconds(new Date(), activeCycle.startDate),
+        )
+      }, 1000)
+    }
+    return () => {
+      clearInterval(interval)
+    }
+  }, [activeCycle])
   const task = watch('task')
   const isSubmitDisable = !task
-  const handleCreateNewCicle = (data: NewCicleFormDataProps) => {
-    console.log(data)
+  const handleCreateNewCycle = (data: NewCicleFormDataProps) => {
+    const id = String(new Date().getTime())
+    const newCycle: CycleProps = {
+      id,
+      task: data.task,
+      minutesAmount: data.minutesAmount,
+      startDate: new Date(),
+    }
+
+    setCycles((state) => [...state, newCycle])
+    setActiveCycleId(id)
+    setAmountSecondsPast(0)
     reset()
   }
+  const totalSeconds = activeCycle ? activeCycle.minutesAmount * 60 : 0
+  const currentSeconds = activeCycle ? totalSeconds - amountSecondsPast : 0
+  const minutesAmount = Math.floor(currentSeconds / 60)
+  const secondsAmount = currentSeconds % 60
+  const minutes = String(minutesAmount).padStart(2, '0')
+  const seconds = String(secondsAmount).padStart(2, '0')
+
+  useEffect(() => {
+    if (activeCycle) {
+      document.title = `Ignite Timer | ${minutes}:${seconds}`
+    }
+  }, [minutes, seconds, activeCycle])
   return (
     <HomeContainer>
-      <form action="" onSubmit={handleSubmit(handleCreateNewCicle)}>
+      <form action="" onSubmit={handleSubmit(handleCreateNewCycle)}>
         <FormContainer>
           <label htmlFor="task">Vou trabalhar em</label>
           <TaskInput
@@ -66,11 +114,11 @@ export default function Home() {
         </FormContainer>
 
         <CountDownContainer>
-          <span>0</span>
-          <span>0</span>
+          <span>{minutes[0]}</span>
+          <span>{minutes[1]}</span>
           <Separator>:</Separator>
-          <span>0</span>
-          <span>0</span>
+          <span>{seconds[0]}</span>
+          <span>{seconds[1]}</span>
         </CountDownContainer>
 
         <StartCountDownButton type="submit" disabled={isSubmitDisable}>
