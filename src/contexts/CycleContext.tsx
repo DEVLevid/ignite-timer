@@ -1,6 +1,6 @@
 import { ReactNode, createContext, useState } from 'react'
 
-interface CycleProps {
+interface Cycles {
   id: string
   task: string
   minutesAmount: number
@@ -19,7 +19,8 @@ interface CyclesContextProviderProps {
 }
 
 interface CyclesContetxtType {
-  activeCycle: CycleProps | undefined
+  cycles: Cycles[]
+  activeCycle: Cycles | undefined
   activeCycleId: string | null
   amountSecondsPast: number
   setCurrentCycleActive: () => void
@@ -32,7 +33,7 @@ export const CyclesContext = createContext({} as CyclesContetxtType)
 export function CyclesContextProvider({
   children,
 }: CyclesContextProviderProps) {
-  const [cycles, setCycles] = useState<CycleProps[]>([])
+  const [cycles, setCycles] = useState<Cycles[]>([])
   const [activeCycleId, setActiveCycleId] = useState<string | null>(null)
   const [amountSecondsPast, setAmountSecondsPast] = useState<number>(0)
   const activeCycle = cycles.find((cycle) => cycle.id === activeCycleId)
@@ -54,21 +55,21 @@ export function CyclesContextProvider({
   }
 
   function InterruptCurrentCycle() {
-    setActiveCycleId(null)
     setCycles((state) =>
       state.map((cycle) => {
         if (cycle.id === activeCycleId) {
-          return { ...cycle, finishedDate: new Date() }
+          return { ...cycle, interruptedDate: new Date() }
         } else {
           return cycle
         }
       }),
     )
+    setActiveCycleId(null)
   }
 
   function CreateNewCycle(data: CreateCycleType) {
     const id = String(new Date().getTime())
-    const newCycle: CycleProps = {
+    const newCycle: Cycles = {
       id,
       task: data.task,
       minutesAmount: data.minutesAmount,
@@ -90,6 +91,7 @@ export function CyclesContextProvider({
         setSecondsPassed,
         CreateNewCycle,
         InterruptCurrentCycle,
+        cycles,
       }}
     >
       {children}
